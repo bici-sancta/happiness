@@ -14,6 +14,8 @@ rm(list=ls())
 library(ggplot2)
 library(MASS)
 library(car)
+library(moments)
+library(cowplot)
 
 home_dir <- "~/_smu/_src/happiness/"
 setwd(home_dir)
@@ -93,14 +95,39 @@ data_dir <- "./data"
 
 	pdf ("hp_2015_train_plots.pdf", width = 10, height = 7)
 
-	par (mfrow = c (2, 3))
-	for (i in 2:(length(hp_2015)))
+	par (mfrow = c (2, 4))
+	for (i in 6 : (length(hp_2015)))
 	{
 		if(class(hp_2015[,i]) == "integer" || class(hp_2015[,i]) == "numeric" || class(hp_2015[,i]) == "matrix")
 		{
 			plot (hp_2015[,i], main = (names(hp_2015[i])))
 			hist(hp_2015[,i])
+			if (skewness(hp_2015[,i], na.rm = TRUE) < 0)
+			{
+				txt_pos <- "topleft"
+			}
+			else {
+				txt_pos <- "topright"
+			}
+			legend(txt_pos, legend = c(paste("Mean =", round(mean(hp_2015[,i], na.rm = TRUE), 1)),
+                            paste("Median =",round(median(hp_2015[,i], na.rm = TRUE), 1)),
+                            paste("Std.Dev =", round(sd(hp_2015[,i], na.rm = TRUE), 1)), 
+                            paste("Skewness =", round(skewness(hp_2015[,i], na.rm = TRUE), 1))), 
+                  bty = "n")
+			
+			
 			plot(hp_2015$happiness.score  ~ hp_2015[,i])
+
+# ...	look at residuals from one-variable linear fit			
+
+			fit <- lm(hp_2015$happiness.score ~ hp_2015[,i])
+			res <- resid(fit, na.action = na.exclude)
+			plot (hp_2015[,i], res,
+				  ylab = "Residuals",
+				  xlab = (names(hp_2015[i])),
+				  main = "Linear Fit")
+			abline (0, 0)
+			
 		}
 	}
 
@@ -111,14 +138,14 @@ data_dir <- "./data"
 		{
 			plot_title <- names(hp_2015[i])
 
-			p <- ggplot(hp_2015, aes(x = hp_2015[,i], fill = hp_2015[,i])) + geom_bar() + labs(title = plot_title)
-			print(p)
+			p1 <- ggplot(hp_2015, aes(x = hp_2015[,i], fill = hp_2015[,i])) + geom_bar() + labs(title = plot_title)
 
-			p <- ggplot(hp_2015, aes(x = hp_2015[,i], y = happiness.score, fill = hp_2015[,i])) + geom_boxplot() + labs(title = plot_title)
+			p2 <- ggplot(hp_2015, aes(x = hp_2015[,i], y = happiness.score, fill = hp_2015[,i])) + geom_boxplot() + labs(title = plot_title)
+
+			p <- plot_grid(p1, p2, align='h', labels=c('', ''))
 			print(p)
 		}
 	}	
-		
 
 	dev.off()
 ```
