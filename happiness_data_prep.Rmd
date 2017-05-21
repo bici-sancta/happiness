@@ -118,7 +118,9 @@ data_dir <- "./data"
 			
 			plot(hp_2015$happiness.score  ~ hp_2015[,i])
 
+# ...	-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # ...	look at residuals from one-variable linear fit			
+# ...	-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 			fit <- lm(hp_2015$happiness.score ~ hp_2015[,i])
 			res <- resid(fit, na.action = na.exclude)
