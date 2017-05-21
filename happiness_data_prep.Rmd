@@ -1,0 +1,278 @@
+---
+title: "world happiness - kaggle dataset"
+author: "preeti swaminathan & patrick mcdevitt"
+date: "20 may 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+
+rm(list=ls())
+
+library(ggplot2)
+library(MASS)
+library(car)
+
+home_dir <- "~/_smu/_src/happiness/"
+setwd(home_dir)
+
+data_dir <- "./data"
+
+
+```
+
+## Happiness - à la Kaggle
+
+  
+```{r read data, include = TRUE, message = FALSE}
+
+	setwd(home_dir)
+	setwd(data_dir)
+
+	hp_2015 <- read.csv("2015.csv", stringsAsFactors = FALSE)
+	setwd(home_dir)
+
+	names(hp_2015) <- tolower(names(hp_2015))
+	
+	for (i in 2:(length(hp_2015)))
+	{
+		if (class(hp_2015[,i]) == "character")
+		{
+			hp_2015[,i] <- factor (hp_2015[,i])
+		}
+	}
+```
+
+```{r remove outliers, include = TRUE, message = FALSE}
+
+# ...	-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# ...	remove outliers ... more than 5 sigma from mean value
+# ...	-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	
+	lst <- length(hp_2015) - 1	# sale price is (currently) last column
+	
+	for (i in 2 : lst)
+	{
+		if(class(hp_2015[,i]) == "integer" || class(hp_2015[,i]) == "numeric")
+		{
+			hp_2015[,i][which(scale(hp_2015[,i]) > 5)] <- NA
+			hp_2015[,i][which(scale(hp_2015[,i]) < -5)] <- NA
+		}
+	}
+
+```
+
+```{r new and scale, include = TRUE, message = FALSE}
+
+# ...	-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# ...	create a few new columns
+# ...	-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+	
+# ...	-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# ...	scale each column independently
+# ...	-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+#	for (i in 2 : length(hp_2015))
+#	{
+#		if(class(hp_2015[,i]) == "integer" || class(hp_2015[,i]) == "numeric")
+#		{
+#			hp_2015[,i] <- scale(hp_2015[,i])
+#		}
+#	}
+
+```
+
+```{r plot base data, include = TRUE, message = FALSE}
+
+# ...	-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# ...	make some plots for numberic variables... linear, log_x, log_y, log_xy ...
+# ...	-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+	pdf ("hp_2015_train_plots.pdf", width = 10, height = 7)
+
+	par (mfrow = c (2, 3))
+	for (i in 2:(length(hp_2015)))
+	{
+		if(class(hp_2015[,i]) == "integer" || class(hp_2015[,i]) == "numeric" || class(hp_2015[,i]) == "matrix")
+		{
+			plot (hp_2015[,i], main = (names(hp_2015[i])))
+			hist(hp_2015[,i])
+			plot(hp_2015$happiness.score  ~ hp_2015[,i])
+		}
+	}
+
+	par (mfrow = c (2, 2))
+	for (i in 2:(length(hp_2015)))
+	{
+		if(class(hp_2015[,i]) == "factor")
+		{
+			plot_title <- names(hp_2015[i])
+
+			p <- ggplot(hp_2015, aes(x = hp_2015[,i], fill = hp_2015[,i])) + geom_bar() + labs(title = plot_title)
+			print(p)
+
+			p <- ggplot(hp_2015, aes(x = hp_2015[,i], y = happiness.score, fill = hp_2015[,i])) + geom_boxplot() + labs(title = plot_title)
+			print(p)
+		}
+	}	
+		
+
+	dev.off()
+```
+
+```{r first basic fit, echo = TRUE, message = FALSE} 
+
+	for (i in 2:(length(hp_2015)))
+	{
+		if(class(hp_2015[,i]) == "integer" || class(hp_2015[,i]) == "numeric" || class(hp_2015[,i]) == "matrix")
+		{
+			fit <- lm(log(hp_2015$saleprice) ~ hp_2015[,i])
+			
+			print(sprintf(" ... %3d : %20s | %10s | r^2 = %8.3f | p-value = %12.4e",
+						  i, names(hp_2015[i]), class(hp_2015[,i]), summary(fit)$r.squared, summary(fit)$coefficients[,4][2] ))
+		}
+	}
+
+```
+
+```{r impute, include = TRUE, message = FALSE}
+
+# ...	-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# ...	Impute NAs to functional value
+# ...
+# ...	--> for numerical variables - impute to mean value in column
+# ...	--> for factor variables - create new factor "None"
+# ...	-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+	for (i in 1 : (length(hp_2015)))
+	{
+		if(class(hp_2015[,i]) == "integer" || class(hp_2015[,i]) == "numeric" || class(hp_2015[,i]) == "matrix")
+		{
+			hp_2015[,i][is.na (hp_2015[,i])] <- mean(hp_2015[,i], na.rm = TRUE)
+		}
+	}
+	
+	for (i in 1 : (length(hp_2015)))
+	{
+		if(class(hp_2015[,i]) == "factor")
+		{
+			levels <- levels(hp_2015[,i])
+			levels[length(levels) + 1] <- "None"
+			hp_2015[,i] <- factor(hp_2015[,i], levels = levels)
+			hp_2015[,i][is.na (hp_2015[,i])] <- "None"
+		}
+	}
+
+```
+
+```{r update r^2 after imputation, echo = TRUE, message = FALSE} 
+
+	for (i in 2:(length(hp_2015)))
+	{
+		if(class(hp_2015[,i]) == "integer" || class(hp_2015[,i]) == "numeric" || class(hp_2015[,i]) == "matrix")
+		{
+			fit <- lm(log(hp_2015$saleprice) ~ hp_2015[,i])
+			
+			print(sprintf(" ... %3d : %20s | %10s | r^2 = %8.3f | p-value = %12.4e",
+						  i, names(hp_2015[i]), class(hp_2015[,i]), summary(fit)$r.squared, summary(fit)$coefficients[,4][2] ))
+		}
+	}
+
+```
+
+
+
+
+``` {r visual removals, include = TRUE, message = FALSE}
+
+# ...	-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# ...	Columns to remove - based on visual inspection
+# ...	-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+# ...	save top 20 (based on r^2) for trial evaluation in SAS
+
+	hp_2015$log_lotfrontage <- log(hp_2015$lotfrontage)
+	hp_2015$log_lotarea <- log(hp_2015$lotarea)
+	hp_2015$log_grlivarea <- log(hp_2015$grlivarea)
+	hp_2015$log_saleprice <- log(hp_2015$saleprice)
+	
+	hp_2015_sas_keep <- subset(hp_2015,
+			select = c(
+				log_saleprice,
+			bsmtfinsf1,
+			bsmtfintype1,
+			bsmtfullbath,
+			bsmtqual,
+			centralair,
+			electrical,
+			exterior1st,
+			exterior2nd,
+			exterqual,
+			fireplacequ,
+			fireplaces,
+			foundation,
+			fullbath,
+			garagearea,
+			garagecars,
+			garagefinish,
+			garagetype,
+			grlivarea,
+			halfbath,
+			heatingqc,
+			housestyle,
+			kitchenqual,
+			log_grlivarea,
+			log_saleprice,
+			log_lotarea,
+			log_lotfrontage,
+			lotshape,
+			masvnrtype,
+			mszoning,
+			neighborhood,
+			overallcond,
+			overallqual,
+			saletype,
+			totalbsmtsf,
+			totrmsabvgrd,
+			x1stflrsf,
+			x2ndflrsf,
+			yearbuilt,
+			yearremodadd))
+	
+# ...	-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# ... from the keep list , these are the factors :
+# ...	bsmtfintype1, bsmtqual, centralair, electrical, exterior1st, exterior2nd, exterqual,
+# ...	fireplacequ, foundation, garagefinish, garagetype, heatingqc, housestyle, kitchenqual,
+# ...	lotshape, masvnrtype, mszoning, neighborhood, saletype, 
+# ...	-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	
+
+# ...	-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# ...	store reference data frame as base data set
+# ...	-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	
+		hp_2015_subset_base <- hp_2015_sas_keep
+
+```
+
+
+```{r save subsetted data, include = TRUE, message = FALSE}
+
+# ...	-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# ...	save data frame for SAS input file
+# ...	-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+	sas_dir <- "~/sas/SASUniversityEdition/myfolders/"
+	setwd(sas_dir)
+	write.csv (hp_2015_sas_keep, file = "training_set_cleaned.csv", row.names = FALSE)
+	
+	setwd(home_dir)
+	setwd(data_dir)
+	write.csv (hp_2015_sas_keep, file = "training_set_cleaned.csv", row.names = FALSE)
+	setwd(home_dir)
+	
+
+```
