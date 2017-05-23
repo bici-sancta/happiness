@@ -1,7 +1,7 @@
 ---
 title: "world happiness - kaggle dataset"
-author: "preeti swaminathan & patrick mcdevitt"
-date: "20 may 2017"
+author: "patrick mcdevitt (& collaboration with preeti swaminathan)"
+date: "22 may 2017"
 output: html_document
 classoption: landscape
 ---
@@ -28,10 +28,55 @@ data_dir <- "./data"
 
 ```
 
-## Happiness - à la Kaggle
+## Happiness - Regression Project -
+
+
+### __Intro__  
+
+*** 
+The following __Context__ and __Content__ is from : https://www.kaggle.com/unsdsn/world-happiness  
+
+>##### __Context__  
+>The World Happiness Report is a landmark survey of the state of global happiness. The first report was published in 2012, the second in 2013, and the third in 2015. The World Happiness Report 2016 Update, which ranks 156 countries by their happiness levels, was released today in Rome in advance of __UN World Happiness Day, March 20th__.  
+>Leading experts across fields – economics, psychology, survey analysis, national statistics, health, public policy and more – describe how measurements of well-being can be used effectively to assess the progress of nations. The reports review the state of happiness in the world today and show how the new science of happiness explains personal and national variations in happiness. They reflect a new worldwide demand for more attention to happiness as a criteria for government policy.  
+
+>##### __Content__  
+>The happiness scores and rankings use data from the Gallup World Poll. The scores are based on answers to the main life evaluation question asked in the poll. This question, known as the Cantril ladder, asks respondents to think of a ladder with the best possible life for them being a 10 and the worst possible life being a 0 and to rate their own current lives on that scale. The scores are from nationally representative samples for the years 2013-2015 and use the Gallup weights to make the estimates representative. The columns following the happiness score estimate the extent to which each of six factors :  
+>	* economic production,  
+>	* social support,  
+>	* life expectancy,  
+>	* freedom,  
+>	* absence of corruption, and  
+>	* generosity   
+>– contribute to making life evaluations higher in each country than they are in Dystopia, a hypothetical country that has values equal to the world’s lowest national averages for each of the six factors. 
+
+#### __Objective__
+
+Within the context of __World Happiness Day__ explore the data available from the the United Nations survey and idneitfy the characteristics that are associated with higher __happiness__ scores
+
+*** 
+### __Descriptive statistics__  
+
+*** 
+
+### __Analysis__  
+
+*** 
+
+### __Interpretation__  
+
+*** 
+
+### __Conclusion__  
+
+*** 
+
 
   
-```{r read data, include = TRUE, message = FALSE}
+  
+#### __Setup some data directories  
+
+```{r read data, include = FALSE, message = FALSE}
 
 	setwd(home_dir)
 	setwd(data_dir)
@@ -50,7 +95,9 @@ data_dir <- "./data"
 	}
 ```
 
-```{r remove outliers, include = TRUE, message = FALSE}
+#### __Remove extreme outliers from each column of numerical data__  
+
+```{r remove outliers, include = FALSE, message = FALSE}
 
 # ...	-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # ...	remove outliers ... more than 5 sigma from mean value
@@ -69,7 +116,7 @@ data_dir <- "./data"
 
 ```
 
-```{r new and scale, include = TRUE, message = FALSE}
+```{r new and scale, include = FALSE, message = FALSE}
 
 # ...	-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # ...	create a few new columns
@@ -90,20 +137,37 @@ data_dir <- "./data"
 
 ```
 
-```{r plot base data, include = TRUE, message = FALSE}
+
+#### __Make first data visualization plot for each column of dataset__  
+
+- numeric data columns
+	- historgram with some summary statistics
+	- x-y plot vs. dependent variable (in this case = happiness score)
+	- x-y plot of residuals of each independent variable linear fit to happiness_score
+- categorical columns
+	- histogram of counts of each different value in cateogry
+	- boxplots within that column of data for view of variability by factor
+	
+
+```{r plot base data, echo = FALSE, message = FALSE, comment = "", fig.width = 12}
 
 # ...	-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # ...	make some plots for numberic variables... linear, log_x, log_y, log_xy ...
 # ...	-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-	pdf ("hp_2015_train_plots.pdf", width = 10, height = 7)
+#	pdf ("hp_2015_train_plots.pdf", width = 10, height = 7)
 
-	par (mfrow = c (2, 4))
-	for (i in 7 : (length(hp_2015)))
+	par (mfrow = c (1, 3))
+	for (i in 7 : (length(hp_2015)-1))
 	{
 		if(class(hp_2015[,i]) == "integer" || class(hp_2015[,i]) == "numeric" || class(hp_2015[,i]) == "matrix")
 		{
-			plot (hp_2015[,i], main = (names(hp_2015[i])))
+#			plot (hp_2015[,i], main = (names(hp_2015[i])))
+			
+		cat ("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--\n")
+		cat(sprintf(names(hp_2015[i])))
+		cat ("\n-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--\n")
+				  
 			hist(hp_2015[,i])
 			if (skewness(hp_2015[,i], na.rm = TRUE) < 0)
 			{
@@ -119,7 +183,7 @@ data_dir <- "./data"
                   bty = "n")
 			
 			
-			plot(hp_2015$score  ~ hp_2015[,i])
+			plot(hp_2015$score  ~ hp_2015[,i], col = "blue")
 
 # ...	-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # ...	look at residuals from one-variable linear fit			
@@ -130,16 +194,21 @@ data_dir <- "./data"
 			plot (hp_2015[,i], res,
 				  ylab = "Residuals",
 				  xlab = (names(hp_2015[i])),
-				  main = "Linear Fit")
+				  main = "Linear Fit",
+				  col = "magenta")
 			abline (0, 0)
 			
 		}
 	}
 
-	for (i in 2:(length(hp_2015)))
+	for (i in 3 : (length(hp_2015)))
 	{
 		if(class(hp_2015[,i]) == "factor")
 		{
+			cat ("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--\n")
+			cat(sprintf(names(hp_2015[i])))
+			cat ("\n-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--\n")
+
 			plot_title <- names(hp_2015[i])
 
 			p1 <- ggplot(hp_2015, aes(x = hp_2015[,i], fill = hp_2015[,i])) + geom_bar() + labs(title = plot_title )
@@ -155,5 +224,11 @@ data_dir <- "./data"
 		}
 	}	
 
-	dev.off()
+#	dev.off()
+
 ```
+
+#### __Observations from first data views :
+
+1 - each column is well-behaved ... in the sense that there are not any significant outliers, and 
+- gdp_per_capita
