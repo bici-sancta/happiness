@@ -2,7 +2,7 @@
 title: "world happiness - kaggle dataset"
 author: "patrick mcdevitt (& collaboration with preeti swaminathan)"
 date: "22 may 2017"
-output: html_document
+output: pdf_document
 classoption: landscape
 ---
 
@@ -148,6 +148,8 @@ Within the context of __World Happiness Day__ explore the data available from th
 	- histogram of counts of each different value in cateogry
 	- boxplots within that column of data for view of variability by factor
 	
+![
+	
 
 ```{r plot base data, echo = FALSE, message = FALSE, comment = "", fig.width = 12}
 
@@ -155,20 +157,21 @@ Within the context of __World Happiness Day__ explore the data available from th
 # ...	make some plots for numberic variables... linear, log_x, log_y, log_xy ...
 # ...	-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#	pdf ("hp_2015_train_plots.pdf", width = 10, height = 7)
 
-	par (mfrow = c (1, 3))
 	for (i in 7 : (length(hp_2015)-1))
 	{
 		if(class(hp_2015[,i]) == "integer" || class(hp_2015[,i]) == "numeric" || class(hp_2015[,i]) == "matrix")
 		{
 #			plot (hp_2015[,i], main = (names(hp_2015[i])))
 			
-		cat ("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--\n")
-		cat(sprintf(names(hp_2015[i])))
-		cat ("\n-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--\n")
+#		cat ("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--\n")
+#		cat(sprintf(names(hp_2015[i])))
+#		cat ("\n-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--\n")
 				  
-			hist(hp_2015[,i])
+			png (filename = paste0(names(hp_2015[i]), "_%02d.png"), width = 1920, height = 960)
+			par (mfrow = c (1, 3))
+
+			hist(hp_2015[,i], main = names(hp_2015[i]), cex.lab = 3, cex.main = 3)
 			if (skewness(hp_2015[,i], na.rm = TRUE) < 0)
 			{
 				txt_pos <- "topleft"
@@ -180,10 +183,14 @@ Within the context of __World Happiness Day__ explore the data available from th
                             paste("Median =",round(median(hp_2015[,i], na.rm = TRUE), 1)),
                             paste("Std.Dev =", round(sd(hp_2015[,i], na.rm = TRUE), 1)), 
                             paste("Skewness =", round(skewness(hp_2015[,i], na.rm = TRUE), 1))), 
-                  bty = "n")
+                  bty = "n", cex = 3)
 			
 			
-			plot(hp_2015$score  ~ hp_2015[,i], col = "blue")
+			plot(hp_2015$score  ~ hp_2015[,i], col = "blue", cex = 3, cex.lab = 3, cex.axis = 3, cex.main = 3,
+				 	ylab = "Happiness Score",
+				  	xlab = names(hp_2015[i]),
+				  	main = "Independent variable vs. Happiness Score")
+			abline(lm(hp_2015$score ~ hp_2015[,i]))
 
 # ...	-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # ...	look at residuals from one-variable linear fit			
@@ -191,14 +198,15 @@ Within the context of __World Happiness Day__ explore the data available from th
 
 			fit <- lm(hp_2015$score ~ hp_2015[,i])
 			res <- resid(fit, na.action = na.exclude)
-			plot (hp_2015[,i], res,
+			plot (hp_2015[,i], res, cex = 3, cex.lab = 3, cex.axis = 3, cex.main = 3,
 				  ylab = "Residuals",
-				  xlab = (names(hp_2015[i])),
-				  main = "Linear Fit",
+				  xlab = names(hp_2015[i]),
+				  main = "Residuals from Linear Fit",
 				  col = "magenta")
 			abline (0, 0)
 			
 		}
+		dev.off()
 	}
 
 	for (i in 3 : (length(hp_2015)))
@@ -232,3 +240,111 @@ Within the context of __World Happiness Day__ explore the data available from th
 
 1 - each column is well-behaved ... in the sense that there are not any significant outliers, and 
 - gdp_per_capita
+
+
+
+
+```{r selected data transformations, echo = FALSE, message = FALSE, comment = "", fig.width = 12}
+
+# ...	-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# ...	make some plots for numeric variables... linear, log_x, log_y, log_xy ...
+# ...	-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+# ... corruption data transform
+
+	i <- 11
+
+			png (filename = paste0("log_", names(hp_2015[i]), "_%02d.png"), width = 1920, height = 960)
+			par (mfrow = c (1, 3))
+			
+			hp_2015$tmp_score <- hp_2015$score
+			hp_2015$tmp_crpt <- hp_2015[,i]
+
+			hp_2015$tmp_score[which(hp_2015[,i] > 0.5510)] = NA
+			hp_2015$tmp_crpt [which(hp_2015[,i] > 0.5510)] = NA
+
+			hp_2015$tmp_score[which(hp_2015$tmp_crpt < 0.0001)] = NA
+			hp_2015$tmp_crpt [which(hp_2015$tmp_crpt < 0.0001)] = NA
+			
+			hp_2015$tmp_crpt <- log(hp_2015$tmp_crpt)
+			
+			hist(hp_2015$tmp_crpt, main = names(hp_2015[i]), cex.lab = 3, cex.main = 3)
+			if (skewness(hp_2015$tmp_crpt, na.rm = TRUE) < 0)
+			{
+				txt_pos <- "topleft"
+			} else {
+				txt_pos <- "topright"
+			}
+			legend(txt_pos, legend = c(paste("Mean =", round(mean(hp_2015[,i], na.rm = TRUE), 1)),
+                            paste("Median =",round(median(hp_2015[,i], na.rm = TRUE), 1)),
+                            paste("Std.Dev =", round(sd(hp_2015[,i], na.rm = TRUE), 1)), 
+                            paste("Skewness =", round(skewness(hp_2015[,i], na.rm = TRUE), 1))), 
+                  bty = "n", cex = 3)
+			
+			plot(hp_2015$tmp_score  ~ hp_2015$tmp_crpt, col = "blue", cex = 3, cex.lab = 3, cex.axis = 3, cex.main = 3,
+				 	ylab = "Happiness Score",
+				  	xlab = names(hp_2015[i]),
+				  	main = "Independent variable vs. Happiness Score")
+			abline( lm( hp_2015$tmp_score ~ hp_2015$tmp_crpt, na.action = na.exclude) )
+
+# ...	-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# ...	look at residuals from one-variable linear fit			
+# ...	-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+			fit <- lm(hp_2015$tmp_score ~ hp_2015$tmp_crpt, na.action = na.exclude)
+			res <- resid(fit, na.action = na.exclude)
+			plot (hp_2015$tmp_crpt, res, cex = 3, cex.lab = 3, cex.axis = 3, cex.main = 3,
+				  ylab = "Residuals",
+				  xlab = names(hp_2015[i]),
+				  main = "Residuals from Linear Fit",
+				  col = "magenta")
+			abline (0, 0)
+		dev.off()
+
+# ... generostiy data transform
+
+	i <- 12
+			png (filename = paste0("_", names(hp_2015[i]), "_%02d.png"), width = 1920, height = 960)
+			par (mfrow = c (1, 3))
+			
+			hp_2015$tmp_score <- hp_2015$score
+			hp_2015$tmp_gener <- hp_2015[,i]
+
+			hp_2015$tmp_score[which(hp_2015[,i] > 0.7)] = NA
+			hp_2015$tmp_gener[which(hp_2015[,i] > 0.7)] = NA
+
+			hist(hp_2015$tmp_gener, main = names(hp_2015[i]), cex.lab = 3, cex.main = 3)
+			if (skewness(hp_2015[,i], na.rm = TRUE) < 0)
+			{
+				txt_pos <- "topleft"
+			} else {
+				txt_pos <- "topright"
+			}
+			legend(txt_pos, legend = c(paste("Mean =", round(mean(hp_2015[,i], na.rm = TRUE), 1)),
+                            paste("Median =",round(median(hp_2015[,i], na.rm = TRUE), 1)),
+                            paste("Std.Dev =", round(sd(hp_2015[,i], na.rm = TRUE), 1)), 
+                            paste("Skewness =", round(skewness(hp_2015[,i], na.rm = TRUE), 1))), 
+                  bty = "n", cex = 3)
+			
+			plot(hp_2015$tmp_score ~ hp_2015$tmp_gener, col = "blue", cex = 3, cex.lab = 3, cex.axis = 3, cex.main = 3,
+				 	ylab = "Happiness Score",
+				  	xlab = names(hp_2015[i]),
+				  	main = "Independent variable vs. Happiness Score")
+			abline( lm( hp_2015$tmp_score ~ hp_2015$tmp_gener, na.action = na.exclude ) )
+
+# ...	-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# ...	look at residuals from one-variable linear fit			
+# ...	-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+			fit <- lm(hp_2015$tmp_score ~ hp_2015$tmp_gener, na.action = na.exclude)
+			res <- resid(fit, na.action = na.exclude)
+			plot (hp_2015$tmp_gener, res, cex = 3, cex.lab = 3, cex.axis = 3, cex.main = 3,
+				  ylab = "Residuals",
+				  xlab = names(hp_2015[i]),
+				  main = "Residuals from Linear Fit",
+				  col = "magenta")
+			abline (0, 0)
+		dev.off()
+
+
+```
