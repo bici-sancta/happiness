@@ -138,18 +138,6 @@ Within the context of __World Happiness Day__ explore the data available from th
 ```
 
 
-#### __Make first data visualization plot for each column of dataset__  
-
-- numeric data columns
-	- historgram with some summary statistics
-	- x-y plot vs. dependent variable (in this case = happiness score)
-	- x-y plot of residuals of each independent variable linear fit to happiness_score
-- categorical columns
-	- histogram of counts of each different value in cateogry
-	- boxplots within that column of data for view of variability by factor
-	
-![
-	
 
 ```{r plot base data, echo = FALSE, message = FALSE, comment = "", fig.width = 12}
 
@@ -168,7 +156,7 @@ Within the context of __World Happiness Day__ explore the data available from th
 #		cat(sprintf(names(hp_2015[i])))
 #		cat ("\n-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--\n")
 				  
-			png (filename = paste0(names(hp_2015[i]), "_%02d.png"), width = 1920, height = 960)
+			png (filename = paste0(names(hp_2015[i]), "_%02d.png"), width = 1800, height = 600)
 			par (mfrow = c (1, 3))
 
 			hist(hp_2015[,i], main = names(hp_2015[i]), cex.lab = 3, cex.main = 3)
@@ -213,6 +201,8 @@ Within the context of __World Happiness Day__ explore the data available from th
 	{
 		if(class(hp_2015[,i]) == "factor")
 		{
+			png (filename = paste0(names(hp_2015[i]), "_%02d.png"), width = 900, height = 600)
+
 			cat ("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--\n")
 			cat(sprintf(names(hp_2015[i])))
 			cat ("\n-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--\n")
@@ -229,12 +219,31 @@ Within the context of __World Happiness Day__ explore the data available from th
 #			p <- plot_grid(p1, p2, align='v', labels=c('', ''))
 
 #			print(p)
+			
+			dev.off()
 		}
 	}	
 
 #	dev.off()
 
 ```
+#### __Make first data visualization plot for each column of dataset__  
+
+- numeric data columns
+	- historgram with some summary statistics
+	- x-y plot vs. dependent variable (in this case = happiness score)
+	- x-y plot of residuals of each independent variable linear fit to happiness_score
+- categorical columns
+	- histogram of counts of each different value in cateogry
+	- boxplots within that column of data for view of variability by factor
+	
+![__First Data Views - histogram, single parameter linear fit, fit residuals__](corruption_01.png)  
+
+***  
+
+![__First Data Views - histogram, single parameter linear fit, fit residuals__](generosity_01.png)  
+
+
 
 #### __Observations from first data views :
 
@@ -254,7 +263,7 @@ Within the context of __World Happiness Day__ explore the data available from th
 
 	i <- 11
 
-			png (filename = paste0("log_", names(hp_2015[i]), "_%02d.png"), width = 1920, height = 960)
+			png (filename = paste0("cleaned_log_", names(hp_2015[i]), "_%02d.png"), width = 1800, height = 600)
 			par (mfrow = c (1, 3))
 			
 			hp_2015$tmp_score <- hp_2015$score
@@ -304,7 +313,7 @@ Within the context of __World Happiness Day__ explore the data available from th
 # ... generostiy data transform
 
 	i <- 12
-			png (filename = paste0("_", names(hp_2015[i]), "_%02d.png"), width = 1920, height = 960)
+			png (filename = paste0("cleaned_", names(hp_2015[i]), "_%02d.png"), width = 1800, height = 600)
 			par (mfrow = c (1, 3))
 			
 			hp_2015$tmp_score <- hp_2015$score
